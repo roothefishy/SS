@@ -1,34 +1,46 @@
 # =========================================================
-#          PREMIUM SS TOOLKIT - AUTOMATED SETUP
+#          ELITE SCREENSHEARE TOOLKIT - V4.0
 # =========================================================
-[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
-$ErrorActionPreference = "SilentlyContinue"
 
-# 1. Admin Check & Relaunch
+# 1. WINDOW STYLING
+$Host.UI.RawUI.WindowTitle = "PREMIUM SS TOOLKIT - SESSION ACTIVE"
+$H = Get-Host
+$W = $H.UI.RawUI
+$buffer = $W.BufferSize
+$buffer.Width = 120
+$W.BufferSize = $buffer
+$size = $W.WindowSize
+$size.Width = 120
+$size.Height = 35
+$W.WindowSize = $size
+
+# 2. ELEVATION CHECK
 if (-not ([Security.Principal.WindowsPrincipal] [Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)) {
     Start-Process powershell -Verb RunAs -ArgumentList "-ExecutionPolicy Bypass -File `"$($MyInvocation.MyCommand.Definition)`""
     exit 0
 }
 
-# 2. Setup Directory
-$folder = "C:\SS_Toolbox"
+# 3. ENVIRONMENT SETUP
+$folder = "C:\SS_Master"
 if (-not (Test-Path $folder)) { New-Item -Path $folder -ItemType Directory -Force | Out-Null }
 Set-Location $folder
+Add-MpPreference -ExclusionPath $folder -ErrorAction SilentlyContinue
 
-# 3. Visual Header
+# 4. UI HEADER
 cls
-Write-Host "  ___________________________________________________" -ForegroundColor Cyan
-Write-Host " /                                                   \\" -ForegroundColor Cyan
-Write-Host " |            SCREENSHARE TOOLKIT v2.0               |" -ForegroundColor White
-Write-Host " |          [ AUTOMATED ANALYSIS READY ]             |" -ForegroundColor Green
-Write-Host " \___________________________________________________/" -ForegroundColor Cyan
+Write-Host "  __________________________________________________________________________________________________" -ForegroundColor Cyan
+Write-Host " |                                                                                                  |" -ForegroundColor Cyan
+Write-Host " |   ██████╗  ██████╗██████╗ ███████╗███████╗███╗   ██╗███████╗██╗  ██╗ █████╗ ██████╗ ███████╗     |" -ForegroundColor White
+Write-Host " |   ██╔════╝ ██╔════╝██╔══██╗██╔════╝██╔════╝████╗  ██║██╔════╝██║  ██║██╔══██╗██╔══██╗██╔════╝     |" -ForegroundColor White
+Write-Host " |   ███████╗ ██║     ██████╔╝█████╗  █████╗  ██╔██╗ ██║███████╗███████║███████║██████╔╝█████╗       |" -ForegroundColor White
+Write-Host " |   ╚════██║ ██║     ██╔══██╗██╔══╝  ██╔══╝  ██║╚██╗██║╚════██║██╔══██║██╔══██║██╔══██╗██╔══╝       |" -ForegroundColor White
+Write-Host " |   ███████║ ╚██████╗██║  ██║███████╗███████╗██║ ╚████║███████║██║  ██║██║  ██║██║  ██║███████╗     |" -ForegroundColor White
+Write-Host " |   ╚══════╝  ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝     |" -ForegroundColor White
+Write-Host " |__________________________________________________________________________________________________|" -ForegroundColor Cyan
+Write-Host "                        AUTOMATED ANALYSIS ENGINE | CLEANUP ENABLED                                   " -ForegroundColor DarkGray
 Write-Host ""
 
-# 4. Security Bypass (Defender Exclusion)
-Write-Host "[!] Initializing Secure Workspace..." -ForegroundColor DarkGray
-Add-MpPreference -ExclusionPath $folder 
-
-# 5. Tool Definitions
+# 5. CORE TOOLSET
 $tools = @{
     "System Informer" = "https://github.com/winsiderss/si-builds/releases/download/3.2.25275.112/systeminformer-build-canary-setup.exe"
     "Everything"      = "https://www.voidtools.com/Everything-1.4.1.1029.x64-Setup.exe"
@@ -36,40 +48,54 @@ $tools = @{
     "Prefetch View"   = "https://www.nirsoft.net/utils/winprefetchview-x64.zip"
 }
 
-# 6. Download & Auto-Open Loop
-$i = 0
+# 6. DOWNLOAD & LAUNCH ENGINE
+$count = 0
 foreach ($name in $tools.Keys) {
-    $i++
+    $count++
     $url = $tools[$name]
-    $fileName = Split-Path $url -Leaf
-    $dest = Join-Path $folder $fileName
+    $file = Split-Path $url -Leaf
+    $path = Join-Path $folder $file
     
-    Write-Host "[$i/4] Fetching $name..." -ForegroundColor Cyan -NoNewline
+    Write-Host "  [$count/4] Initializing $name..." -ForegroundColor Cyan -NoNewline
     
-    # Simple Progress Tracker
     try {
-        Invoke-WebRequest -Uri $url -OutFile $dest -UseBasicParsing
-        Write-Host " [DONE]" -ForegroundColor Green
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-WebRequest -Uri $url -OutFile $path -UseBasicParsing
         
-        if ($fileName.EndsWith(".zip")) {
-            Expand-Archive -Path $dest -DestinationPath "$folder\$name" -Force
-            Remove-Item $dest
-            # Open the folder for unzipped tools
+        if ($file.EndsWith(".zip")) {
+            Expand-Archive -Path $path -DestinationPath "$folder\$name" -Force
+            Remove-Item $path
             Start-Process explorer.exe "$folder\$name"
+            Write-Host " [READY]" -ForegroundColor Green
         } else {
-            # Automatically launch .exe tools
-            Start-Process $dest
+            Start-Process $path
+            Write-Host " [ACTIVE]" -ForegroundColor Green
         }
     } catch {
         Write-Host " [FAILED]" -ForegroundColor Red
     }
 }
 
-# 7. Final Polish
-Write-Host "`n=====================================================" -ForegroundColor Cyan
-Write-Host "  SETUP COMPLETE: All tools are active and running." -ForegroundColor Green
-Write-Host "=====================================================" -ForegroundColor Cyan
-Write-Host " Workspace: $folder" -ForegroundColor DarkGray
+Write-Host "`n  ================================================================================__________________" -ForegroundColor Cyan
+Write-Host "  [!] ALL TOOLS LOADED. CONDUCT YOUR SCAN NOW." -ForegroundColor Yellow
+Write-Host "  [X] PRESS 'X' TO DELETE ALL TOOLS AND REMOVE EXCLUSIONS." -ForegroundColor Red
+Write-Host "  ================================================================================__________________" -ForegroundColor Cyan
 
-# Keeps the window open so you can see the logs
-pause
+# 7. CLEANUP LOGIC (The "Delete All" feature)
+$key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+if ($key.Character -eq 'x' -or $key.Character -eq 'X') {
+    Write-Host "`n  [*] INITIATING PURGE..." -ForegroundColor Red
+    
+    # Close running processes first so files can be deleted
+    Stop-Process -Name "SystemInformer", "Everything", "hollows_hunter32" -ErrorAction SilentlyContinue
+    
+    # Remove Defender Exclusion
+    Remove-MpPreference -ExclusionPath $folder -ErrorAction SilentlyContinue
+    
+    # Remove Files
+    Remove-Item -Path $folder -Recurse -Force -ErrorAction SilentlyContinue
+    
+    Write-Host "  [✓] Workspace wiped. Defender exclusions removed." -ForegroundColor Green
+    Start-Sleep -Seconds 2
+    exit
+}
