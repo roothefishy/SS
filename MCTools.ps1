@@ -1,5 +1,5 @@
 # =========================================================
-#          ELITE SCREENSHEARE TOOLKIT - V4.0
+#          ELITE SCREENSHEARE TOOLKIT - V6.0
 # =========================================================
 
 # 1. WINDOW STYLING
@@ -37,7 +37,7 @@ Write-Host " |   ╚════██║ ██║     ██╔══██╗
 Write-Host " |   ███████║ ╚██████╗██║  ██║███████╗███████╗██║ ╚████║███████║██║  ██║██║  ██║██║  ██║███████╗     |" -ForegroundColor White
 Write-Host " |   ╚══════╝  ╚═════╝╚═╝  ╚═╝╚══════╝╚══════╝╚═╝  ╚═══╝╚══════╝╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝     |" -ForegroundColor White
 Write-Host " |__________________________________________________________________________________________________|" -ForegroundColor Cyan
-Write-Host "                        AUTOMATED ANALYSIS ENGINE | CLEANUP ENABLED                                   " -ForegroundColor DarkGray
+Write-Host "                    HARD-PURGE ENABLED | TASKS PARSER | NAYXZ-CORE                                   " -ForegroundColor DarkGray
 Write-Host ""
 
 # 5. CORE TOOLSET
@@ -46,6 +46,7 @@ $tools = @{
     "Everything"      = "https://www.voidtools.com/Everything-1.4.1.1029.x64-Setup.exe"
     "Hollows Hunter"  = "https://github.com/hasherezade/hollows_hunter/releases/download/v0.4.1.1/hollows_hunter32.exe"
     "Prefetch View"   = "https://www.nirsoft.net/utils/winprefetchview-x64.zip"
+    "Tasks Parser"    = "https://github.com/zedoonvm1/TasksParser/releases/download/1.1/Tasks.Parser.exe"
 }
 
 # 6. DOWNLOAD & LAUNCH ENGINE
@@ -56,7 +57,7 @@ foreach ($name in $tools.Keys) {
     $file = Split-Path $url -Leaf
     $path = Join-Path $folder $file
     
-    Write-Host "  [$count/4] Initializing $name..." -ForegroundColor Cyan -NoNewline
+    Write-Host "  [$count/5] Initializing $name..." -ForegroundColor Cyan -NoNewline
     
     try {
         [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
@@ -65,7 +66,6 @@ foreach ($name in $tools.Keys) {
         if ($file.EndsWith(".zip")) {
             Expand-Archive -Path $path -DestinationPath "$folder\$name" -Force
             Remove-Item $path
-            Start-Process explorer.exe "$folder\$name"
             Write-Host " [READY]" -ForegroundColor Green
         } else {
             Start-Process $path
@@ -77,25 +77,41 @@ foreach ($name in $tools.Keys) {
 }
 
 Write-Host "`n  ================================================================================__________________" -ForegroundColor Cyan
-Write-Host "  [!] ALL TOOLS LOADED. CONDUCT YOUR SCAN NOW." -ForegroundColor Yellow
-Write-Host "  [X] PRESS 'X' TO DELETE ALL TOOLS AND REMOVE EXCLUSIONS." -ForegroundColor Red
+Write-Host "  [!] STATUS: OPERATIONAL." -ForegroundColor Yellow
+Write-Host "  [X] PRESS 'X' TO INITIATE HARD-PURGE (FORCE DELETE ALL)." -ForegroundColor Red
 Write-Host "  ================================================================================__________________" -ForegroundColor Cyan
 
-# 7. CLEANUP LOGIC (The "Delete All" feature)
-$key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-if ($key.Character -eq 'x' -or $key.Character -eq 'X') {
-    Write-Host "`n  [*] INITIATING PURGE..." -ForegroundColor Red
-    
-    # Close running processes first so files can be deleted
-    Stop-Process -Name "SystemInformer", "Everything", "hollows_hunter32" -ErrorAction SilentlyContinue
-    
-    # Remove Defender Exclusion
-    Remove-MpPreference -ExclusionPath $folder -ErrorAction SilentlyContinue
-    
-    # Remove Files
-    Remove-Item -Path $folder -Recurse -Force -ErrorAction SilentlyContinue
-    
-    Write-Host "  [✓] Workspace wiped. Defender exclusions removed." -ForegroundColor Green
-    Start-Sleep -Seconds 2
-    exit
+# 7. ENHANCED PURGE LOGIC
+while($true) {
+    if ($Host.UI.RawUI.KeyAvailable) {
+        $key = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
+        if ($key.Character -eq 'x' -or $key.Character -eq 'X') {
+            Write-Host "`n  [*] KILLING PROCESSES..." -ForegroundColor Red
+            
+            # Force Kill based on common names and descriptions
+            $killList = @("SystemInformer", "Everything", "hollows_hunter32", "Tasks.Parser", "winprefetchview")
+            foreach ($p in $killList) { 
+                Stop-Process -Name $p -Force -ErrorAction SilentlyContinue 
+            }
+            
+            Write-Host "  [*] RELEASING FILE LOCKS..." -ForegroundColor Yellow
+            Start-Sleep -Seconds 2 # Critical delay for Windows to let go of the files
+            
+            Write-Host "  [*] WIPING WORKSPACE..." -ForegroundColor Red
+            Remove-MpPreference -ExclusionPath $folder -ErrorAction SilentlyContinue
+            
+            # Use cmd /c rd for a deeper, more aggressive delete than PowerShell's Remove-Item
+            cmd /c "rd /s /q $folder" 2>$null
+            
+            if (Test-Path $folder) {
+                Write-Host "  [!] Folder stubborn. Attempting final forced wipe..." -ForegroundColor Yellow
+                Remove-Item -Path $folder -Recurse -Force -ErrorAction SilentlyContinue
+            }
+            
+            Write-Host "  [✓] PURGE COMPLETE. SYSTEM CLEANED." -ForegroundColor Green
+            Start-Sleep -Seconds 2
+            exit
+        }
+    }
+    Start-Sleep -Milliseconds 100
 }
